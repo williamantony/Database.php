@@ -1,0 +1,22 @@
+{
+    "name": "wa/database",
+    "description": "Custom Database Class",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "William Antony",
+            "email": "william@pathadan.com"
+        }
+    ],
+    "require": {
+        "ramsey/uuid": "^4.0",
+        "wa/sql": "^1.0",
+        "wa/error-handler": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WA\\Database\\": "src/"
+        }
+    }
+}
