@@ -17,7 +17,7 @@ class Table
             $this->fromArray($values);
     }
 
-    protected function uuid(string $uuid = null)
+    protected function uuid(string $uuid = "")
     {
         if (!Uuid::isValid($uuid))
             return Uuid::uuid4()->toString();
