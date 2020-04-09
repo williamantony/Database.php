@@ -54,18 +54,19 @@ class Table
         return $this->$primaryKey;
     }
 
-    public function setPrimaryKey(string $primaryKeyValue = null)
+    public function setPrimaryKey(string $value = null, bool $create_new = false)
     {
         $primaryKey = static::$primaryKey;
+        $set_pk = "set" . ucfirst(static::$primaryKey);
+
+        if (is_string($value))
+            return $this->$set_pk($value);
+        
+        if ($create_new)
+            return $this->$set_pk($this->uuid());
 
         if (!isset($this->$primaryKey))
-        {
-            if (!isset($primaryKeyValue))
-                $primaryKeyValue = $this->uuid();
-
-            $set_pk = "set" . ucfirst(static::$primaryKey);
-            $this->$set_pk($primaryKeyValue);
-        }
+            return $this->$set_pk($this->uuid());
     }
 
 
@@ -105,11 +106,14 @@ class Table
 
 
 
-    public function insert()
+    public function insert(bool $new_pk = false)
     {
         global $mysqli;
 
         $tableName = static::$tableName;
+
+        if ($new_pk)
+            $this->setPrimaryKey($create_new = true);
 
         $sql = new Insert();
         $query = $sql
@@ -270,7 +274,7 @@ class Table
     public function populate(bool $overwrite = false)
     {
         if (!$results = $this->fetchOne()) {
-            $this->setPrimaryKey();
+            $this->setPrimaryKey($create_new = true);
             return false;
         }
 
@@ -291,12 +295,15 @@ class Table
         return true;
     }
 
-    public function save()
+    public function save(bool $allowDuplicates = false)
     {
         $this->populate();
 
         if (!$this->exists())
             return $this->insert();
+
+        else if ($allowDuplicates)
+            return $this->insert($create_new = true);
         
         return $this->update();
     }
