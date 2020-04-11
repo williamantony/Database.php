@@ -31,7 +31,7 @@ class Table
 
         // Set Attributes
         $attributes = get_class_vars(get_called_class());
-        $predefined_attrs = array( "_attributes" );
+        $predefined_attrs = array( "table", "primary_key", "tableName", "primaryKey", "attributes" );
 
         foreach ($attributes as $name => $value) {
             if (!in_array($name, $predefined_attrs))
