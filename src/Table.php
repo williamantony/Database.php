@@ -8,13 +8,39 @@ use WA\ErrorHandler\Error;
 
 class Table
 {
+    private static $tableName;
+    private static $primaryKey;
+    private static $attributes = array();
+
     public function __construct($values = null)
     {
+        $this->init();
+
         if (is_string($values))
             $this->setPrimaryKey($values);
 
         if (is_array($values))
             $this->fromArray($values);
+    }
+
+    private function init()
+    {
+        // Set Table Name
+        if (isset(static::$table))
+            self::$tableName = static::$table;
+
+        // Set Attributes
+        $attributes = get_class_vars(get_called_class());
+        $predefined_attrs = array( "_attributes" );
+
+        foreach ($attributes as $name => $value) {
+            if (!in_array($name, $predefined_attrs))
+                array_push(self::$attributes, $name);
+        }
+
+        //  Set Primary Key
+        if (isset(static::$primary_key))
+            self::$primaryKey = static::$primary_key;
     }
 
     protected function uuid(string $uuid = "")
@@ -38,7 +64,7 @@ class Table
     public function toArray(bool $strict = false)
     {
         $array = array();
-        $attributes = static::$attributes;
+        $attributes = self::$attributes;
 
         foreach ($attributes as $value) {
             if ($strict || isset($this->$value))
@@ -50,18 +76,18 @@ class Table
 
     public function toString()
     {
-        $primaryKey = static::$primaryKey;
+        $primaryKey = self::$primaryKey;
         return $this->$primaryKey;
     }
 
-    public function setPrimaryKey(string $value = null, bool $create_new = false)
+    public function setPrimaryKey($value = null, bool $create_new = false)
     {
-        $primaryKey = static::$primaryKey;
-        $set_pk = "set" . ucfirst(static::$primaryKey);
+        $primaryKey = self::$primaryKey;
+        $set_pk = "set" . ucfirst($primaryKey);
 
         if (is_string($value))
             return $this->$set_pk($value);
-        
+
         if ($create_new)
             return $this->$set_pk($this->uuid());
 
@@ -100,20 +126,23 @@ class Table
 
     public function truncateQuery()
     {
-        $tableName = static::$tableName;
+        $tableName = self::$tableName;
         return "TRUNCATE `$tableName`;";
     }
 
 
 
-    public function insert(bool $new_pk = false)
+    public function insert(bool $create_new_pk = false)
     {
         global $mysqli;
 
-        $tableName = static::$tableName;
+        $tableName = self::$tableName;
 
-        if ($new_pk)
-            $this->setPrimaryKey($create_new = true);
+        if ($create_new_pk)
+        {
+            // Create New Primary Key
+            $this->setPrimaryKey(null, true);
+        }
 
         $sql = new Insert();
         $query = $sql
@@ -131,8 +160,8 @@ class Table
     {
         global $mysqli;
 
-        $tableName = static::$tableName;
-        $primaryKey = static::$primaryKey;
+        $tableName = self::$tableName;
+        $primaryKey = self::$primaryKey;
         
         $sql = new Update($tableName);
         $query = $sql
@@ -153,7 +182,7 @@ class Table
         global $mysqli;
 
         $sql = new Selector();
-        $sql->table(static::$tableName);
+        $sql->table(self::$tableName);
 
         $query_1 = $sql
             ->where($where)
@@ -189,7 +218,7 @@ class Table
         global $mysqli;
 
         $sql = new Selector();
-        $sql->table(static::$tableName)
+        $sql->table(self::$tableName)
             ->where($where);
 
         if (is_int($limit))
@@ -205,7 +234,7 @@ class Table
 
     private function fetchByPrimaryKey()
     {
-        $primaryKey = static::$primaryKey;
+        $primaryKey = self::$primaryKey;
 
         if (!isset($this->$primaryKey))
             return false;
@@ -273,8 +302,10 @@ class Table
 
     public function populate(bool $overwrite = false)
     {
-        if (!$results = $this->fetchOne()) {
-            $this->setPrimaryKey($create_new = true);
+        if (!$results = $this->fetchOne())
+        {
+            // Create New Primary Key
+            $this->setPrimaryKey(null, true);
             return false;
         }
 
@@ -284,7 +315,7 @@ class Table
                 if (!$overwrite && isset($this->$name))
                     continue;
 
-                if (!in_array($name, static::$attributes))
+                if (!in_array($name, self::$attributes))
                     continue;
 
                 $setter = "set" . ucfirst($name);
@@ -303,7 +334,10 @@ class Table
             return $this->insert();
 
         else if ($allowDuplicates)
-            return $this->insert($create_new = true);
+        {
+            // Create new Row even if there are duplicates
+            return $this->insert(true);
+        }
         
         return $this->update();
     }
