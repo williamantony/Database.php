@@ -1,6 +1,7 @@
 {
     "name": "wa/database",
     "description": "Custom Database Class",
+    "version": "1.1.0",
     "type": "library",
     "license": "MIT",
     "authors": [
