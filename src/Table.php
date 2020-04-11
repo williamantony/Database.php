@@ -11,6 +11,7 @@ class Table
     private static $tableName;
     private static $primaryKey;
     private static $attributes = array();
+    private static $setters = array();
 
     public function __construct($values = null)
     {
@@ -29,6 +30,10 @@ class Table
         if (isset(static::$table))
             self::$tableName = static::$table;
 
+        //  Set Primary Key
+        if (isset(static::$primary_key))
+            self::$primaryKey = static::$primary_key;
+
         // Set Attributes
         $attributes = get_class_vars(get_called_class());
         $predefined_attrs = array( "table", "primary_key", "tableName", "primaryKey", "attributes" );
@@ -38,9 +43,15 @@ class Table
                 array_push(self::$attributes, $name);
         }
 
-        //  Set Primary Key
-        if (isset(static::$primary_key))
-            self::$primaryKey = static::$primary_key;
+        // Set Setter Names
+        foreach (self::$attributes as $name) {
+            $setter = "set";
+            foreach (explode("_", $name) as $part)
+                $setter .= ucfirst($part);
+            self::$setters[$name] = $setter;
+        }
+
+        print_r(self::$setters);
     }
 
     protected function uuid(string $uuid = "")
@@ -55,7 +66,7 @@ class Table
     {
         foreach ($values as $key => $value) {
             if (property_exists(get_class($this), $key)) {
-                $setter = "set" . ucfirst($key);
+                $setter = self::$setters[$key];
                 $this->$setter($value);
             }
         }
@@ -83,7 +94,7 @@ class Table
     public function setPrimaryKey($value = null, bool $create_new = false)
     {
         $primaryKey = self::$primaryKey;
-        $set_pk = "set" . ucfirst($primaryKey);
+        $set_pk = self::$setters[$primaryKey];
 
         if (is_string($value))
             return $this->$set_pk($value);
@@ -318,7 +329,7 @@ class Table
                 if (!in_array($name, self::$attributes))
                     continue;
 
-                $setter = "set" . ucfirst($name);
+                $setter = self::$setters[$name];
                 $this->$setter($value);
             }
         }
