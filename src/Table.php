@@ -36,7 +36,7 @@ class Table
 
         // Set Attributes
         $attributes = get_class_vars(get_called_class());
-        $predefined_attrs = array( "table", "primary_key", "tableName", "primaryKey", "attributes" );
+        $predefined_attrs = array( "table", "primary_key", "tableName", "primaryKey", "attributes", "setters" );
 
         foreach ($attributes as $name => $value) {
             if (!in_array($name, $predefined_attrs))
@@ -50,8 +50,6 @@ class Table
                 $setter .= ucfirst($part);
             self::$setters[$name] = $setter;
         }
-
-        print_r(self::$setters);
     }
 
     protected function uuid(string $uuid = "")
@@ -193,7 +191,7 @@ class Table
         global $mysqli;
 
         $sql = new Selector();
-        $sql->table(self::$tableName);
+        $sql->table(static::$table);
 
         $query_1 = $sql
             ->where($where)
@@ -229,7 +227,7 @@ class Table
         global $mysqli;
 
         $sql = new Selector();
-        $sql->table(self::$tableName)
+        $sql->table(static::$table)
             ->where($where);
 
         if (is_int($limit))
